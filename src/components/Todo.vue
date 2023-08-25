@@ -1,6 +1,6 @@
 <template>
-        <div class="flex flex-col gap-3 p-3 border-2 border-blue-500 my-5 max-w-[720px] m-auto rounded-lg items-center bg-gray-300">
-            <h2 class="w-full text-lg text-sky-700 font-semibold text-center">Create a To-Do Task</h2>
+        <div class="flex flex-col gap-3 p-3 border-2 border-blue-500 my-5 max-w-[720px] m-auto rounded-lg items-center bg-gray-200">
+            <h2 class="w-full text-lg text-sky-700 font-semibold text-center bg-gray-300 rounded">Create a To-Do Task</h2>
             <form @submit.prevent="addTask" class="flex gap-4 w-full">
                 <input v-model="newDate" type="date"
                     class="min-w-[150px] outline-none border-2 border-gray-400 rounded px-2 flex-1" required />
@@ -12,7 +12,7 @@
             </form>
 
             <button @click="() => { viewPending = !viewPending }"
-                class="w-full text-lg text-sky-700 font-semibold text-center mt-4 border border-gray-400 rounded ">Pending
+                class="w-full text-lg text-sky-700 font-semibold text-center mt-4 border border-gray-400 rounded bg-gray-300">Pending
                 Tasks</button>
             <ul v-if="viewPending" class="w-full flex flex-col gap-1">
                 <li class="flex w-full gap-1 justify-between py-1 items-center border-2 border-gray-300 px-2 rounded"
@@ -58,14 +58,14 @@
             <delete-modal v-if="showDeleteModal" deleteMessage="Are you sure?" modalHeadline="Delete customers?"
                 @delete=" deleteTodo()" @cancel="cancelDelete"></delete-modal>
 
-            <h2 class="w-full text-lg text-sky-700 font-semibold text-center mt-4">Completed Tasks</h2>
+            <h2 class="w-full text-lg text-sky-700 font-semibold text-center mt-4 bg-gray-300 rounded">Completed Tasks</h2>
             <ul v-if="completedTasks.length < 4" class="w-full flex flex-col gap-1">
                 <li class="w-full border-2 border-gray-300 px-2 py-2 rounded" v-for="task in completedTasks" :key="task.id">
                     {{ task.description }}
                 </li>
             </ul>
             <button v-if="completedTasks.length > 3" @click="() => { viewAll = !viewAll }"
-                class="w-full text-lg text-sky-700 font-semibold text-center mt-4 border border-gray-400 rounded ">View
+                class="w-full text-lg text-sky-700 font-semibold text-center mt-4 border border-gray-400 bg-gray-300 rounded ">View
                 All</button>
             <ul v-if="viewAll" class="w-full flex flex-col gap-1">
                 <li class="w-full border-2 border-gray-300 px-2 py-2 rounded" v-for="task in completedTasks" :key="task.id">
