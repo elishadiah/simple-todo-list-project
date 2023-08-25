@@ -11,31 +11,61 @@
                 Task</button>
         </form>
 
-        <h2 class="w-full text-lg text-sky-700 font-semibold text-center mt-4">Pending Tasks</h2>
-        <ul class="w-full flex flex-col gap-1">
+        <button @click="() => { viewPending = !viewPending }"
+            class="w-full text-lg text-sky-700 font-semibold text-center mt-4 border border-gray-400 rounded ">Pending
+            Tasks</button>
+        <ul v-if="viewPending" class="w-full flex flex-col gap-1">
             <li class="flex w-full gap-1 justify-between py-1 items-center border-2 border-gray-300 px-2 rounded"
                 v-for="task in pendingTasks" :style="taskStyle(task)" :key="task.id">
+
                 <input id="disabled-checked-checkbox" type="checkbox" @change="readTask(task)"
                     class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600">
-                <span class="text-base text-gray-700">{{ task.description }}</span>
-                <span class="text-base">{{ task.workDate }}</span>
+
+                <span v-if="!task.edit" class="text-base text-red-700">{{ task.description }}</span>
+                <span v-if="!task.edit" class="text-base">{{ task.workDate }}</span>
+
+                <input v-if="task.edit" type="text" v-model="task.description" :ref="'task'"
+                    class="shadow appearance-none border rounded w-full max-w-[480px] py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
+
+                <input v-if="task.edit" v-model="task.workDate" type="date" :ref="'date'"
+                    class="min-w-[150px] outline-none border-2 border-gray-400 rounded px-2 flex-1" required />
+
                 <div class="flex justify-center gap-1">
+                    <button v-if="!task.edit" class="text-sm text-gray-700 border-2 border-gray-500 rounded p-1"
+                        @click="edit(task)">
+                        <component class="text-green-600" :is="icons[3]"></component>
+                    </button>
+                    <button v-else class="text-sm text-gray-700 border-2 border-gray-500 rounded p-1"
+                        @click="() => task.edit = false">
+                        <component class="text-green-600" :is="icons[4]"></component>
+                    </button>
                     <button class="text-sm text-gray-700 border-2 border-gray-500 rounded p-1" @click="completeTask(task)">
                         <component class="text-green-600" :is="icons[0]"></component>
                     </button>
                     <button class="text-sm text-gray-700 border-2 border-gray-500 rounded p-1" @click="duplicateTask(task)">
                         <component class="text-yellow-600" :is="icons[1]"></component>
                     </button>
-                    <button class="text-sm text-gray-700 border-2 border-gray-500 rounded p-1" @click="deleteTask(task)">
+                    <button class="text-sm text-gray-700 border-2 border-gray-500 rounded p-1" @click="showModal(task)">
                         <component class="text-red-600" :is="icons[2]"></component>
                     </button>
-                </div>
 
+                </div>
             </li>
         </ul>
 
+        <delete-modal v-if="showDeleteModal" deleteMessage="Are you sure?" modalHeadline="Delete customers?"
+            @delete=" deleteTodo()" @cancel="cancelDelete"></delete-modal>
+
         <h2 class="w-full text-lg text-sky-700 font-semibold text-center mt-4">Completed Tasks</h2>
-        <ul class="w-full flex flex-col gap-1">
+        <ul v-if="completedTasks.length < 4" class="w-full flex flex-col gap-1">
+            <li class="w-full border-2 border-gray-300 px-2 py-2 rounded" v-for="task in completedTasks" :key="task.id">
+                {{ task.description }}
+            </li>
+        </ul>
+        <button v-if="completedTasks.length > 3" @click="() => { viewAll = !viewAll }"
+            class="w-full text-lg text-sky-700 font-semibold text-center mt-4 border border-gray-400 rounded ">View
+            All</button>
+        <ul v-if="viewAll" class="w-full flex flex-col gap-1">
             <li class="w-full border-2 border-gray-300 px-2 py-2 rounded" v-for="task in completedTasks" :key="task.id">
                 {{ task.description }}
             </li>
@@ -44,12 +74,20 @@
 </template>
   
 <script>
-import { BadgeCheckIcon, TrashIcon, FolderAddIcon   } from "@vue-hero-icons/outline"
+import { BadgeCheckIcon, TrashIcon, FolderAddIcon, PencilAltIcon, SaveIcon } from "@vue-hero-icons/outline";
+import deleteModal from './Modal.vue';
 export default {
     name: "todo-item",
+    components: {
+        deleteModal
+    },
     data() {
         return {
-            icons: [BadgeCheckIcon, FolderAddIcon, TrashIcon ],
+            icons: [BadgeCheckIcon, FolderAddIcon, TrashIcon, PencilAltIcon, SaveIcon],
+            viewPending: false,
+            viewAll: false,
+            showDeleteModal: false,
+            selectedTodo: null,
             newTask: '',
             newDate: '',
             today: {},
@@ -66,12 +104,14 @@ export default {
         },
     },
     methods: {
+
         addTask() {
             if (this.newTask.trim() !== '' && this.newDate.trim() !== '') {
                 this.tasks.push({
                     id: Date.now(),
                     description: this.newTask,
                     completed: false,
+                    edit: false,
                     read: false,
                     workDate: this.newDate
                 });
@@ -79,32 +119,59 @@ export default {
                 this.newDate = '';
             }
         },
+
         readTask(task) { task.read = true; },
+
         completeTask(task) { task.completed = true; },
+
         duplicateTask(task) {
             this.tasks.push({
                 id: Date.now(),
                 description: task.description,
                 completed: false,
+                edit: false,
                 read: false,
                 workDate: task.workDate
             });
         },
+
         deleteTask(task) {
+            this.showDeleteModal != this.showDeleteModal;
             const index = this.tasks.indexOf(task);
             if (index > -1) this.tasks.splice(index, 1);
-
         },
 
         taskStyle(task) {
             const today = new Date();
             const currentDate = new Date(today.getFullYear(), today.getMonth(), today.getDate());
             const workDate = new Date(task.workDate);
-            if (workDate < currentDate) {     return { color: 'red' };       }
+            if (workDate < currentDate) { return { color: 'red' }; }
             return { color: 'green' };
+        },
+
+        edit(task) {
+            this.tasks = this.tasks.map(val => {
+                if (val.id === task.id) {
+                    val.edit = true
+                }
+                return val
+            })
+        },
+
+        showModal(task) {
+            this.selectedTodo = task;
+            this.showDeleteModal = true;
+        },
+
+        deleteTodo() {
+            this.tasks = this.tasks.filter(val => val.id !== this.selectedTodo.id);
+            this.showDeleteModal = false;
+        },
+
+        cancelDelete() {
+            this.showDeleteModal = false;
         }
     }
 };
 </script>
   
-<style>/* Add your Tailwind CSS classes here */</style>
