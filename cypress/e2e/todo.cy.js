@@ -1,3 +1,4 @@
+/* eslint-disable no-undef */
 // todo.cy.js
 
 describe('Todo', () => {
